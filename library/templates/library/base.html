@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="jquery-ui-themes/themes/smoothness/jquery-ui.css" />
+  <script src="jquery.js"></script>
+  <script src="jquery-ui/ui/jquery-ui.js"></script>
+  <title>{% block title %}Base Title{% endblock %}</title>
+</head>
+
+<body>
+  <header>
+    <nav>
+    <a href="login">Log In</a>
+    </nav>
+  </header>
+  <div id="content">
+    {% block content %}{% endblock %}
+  </div>
+  </header>
+</body>
+</html>
