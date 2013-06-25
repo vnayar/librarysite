@@ -1,16 +1,23 @@
+{% load staticfiles %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="stylesheet" href="jquery-ui-themes/themes/smoothness/jquery-ui.css" />
-  <script src="jquery.js"></script>
-  <script src="jquery-ui/ui/jquery-ui.js"></script>
+  <link rel="stylesheet" href="{% static 'jquery-ui-themes/themes/smoothness/jquery-ui.css' %}" />
+  <link rel="stylesheet" href="{% static 'library/library.css' %}"/>
+  <script src="{% static 'jquery.js' %}"></script>
+  <script src="{% static 'jquery-ui/ui/jquery-ui.js' %}"></script>
   <title>{% block title %}Base Title{% endblock %}</title>
 </head>
 
 <body>
   <header>
     <nav>
-    <a href="login">Log In</a>
+      {% if user.is_authenticated %}
+      <button>{{ user.username }}</button>
+      {% else %}
+      <a href="{% url 'login' %}">Log In</a>
+      {% endif %}
+      <a href="{% url 'logout' %}">Log Out</a>
     </nav>
   </header>
   <div id="content">

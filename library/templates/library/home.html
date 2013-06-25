@@ -5,8 +5,8 @@ Library Home
 {% endblock %}
 
 {% block content %}
-{% if request.user %}
-<h1>Welcome {{request.uesr}}!</h1>
+{% if user.is_authenticated %}
+<h1>Welcome {{user.username}}!</h1>
 {% else %}
 <h1>Welcome guest!</h1>
 {% endif %}

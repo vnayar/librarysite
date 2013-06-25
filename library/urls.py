@@ -6,7 +6,10 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
     url(r'^$', 'library.views.index', name='index'),
-    url(r'^login$', 'library.views.login', name='login'),
+    url(r'^login$', 'library.views.login_view', name='login'),
+    url(r'^logout$', 'library.views.logout_view', name='logout'),
+    url(r'^dashboard$', 'library.views.dashboard_view', name='dashboard'),
+    url(r'^admin$', 'library.views.admin_view', name='admin'),
     # Examples:
     # url(r'^$', 'librarysite.views.home', name='home'),
     # url(r'^librarysite/', include('librarysite.foo.urls')),
