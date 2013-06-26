@@ -5,11 +5,12 @@ Library Admin
 {% endblock %}
 
 {% block content %}
+<h1>Admin</h1>
 <nav>
   <ul>
-    <li>Reader</li>
+    <li><a href="{% url 'admin_reader' %}">Manage Readers</a></li>
     <li class="active">Admin</li>
   </ul>
 </nav>
-Admin page.
+
 {% endblock %}

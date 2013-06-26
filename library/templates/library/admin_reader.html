@@ -1,0 +1,39 @@
+{% extends "library/base.html" %}
+
+{% block title %}
+Library Admin
+{% endblock %}
+
+{% block content %}
+<h1>Manage Readers</h1>
+<nav>
+  <ul>
+    <li><a href="{% url 'admin_reader' %}">Manage Readers</a></li>
+    <li class="active">Admin</li>
+  </ul>
+</nav>
+
+<div>
+<div><a href="{% url 'admin_reader_add' %}">Add Reader</a></div>
+<table id="reader-list">
+<tr>
+  <th>ID</th>
+  <th>Email</th>
+  <th>First</th>
+  <th>Last</th>
+  <th>Address</th>
+  <th>Phone #</th>
+</tr>
+{% for reader in readers %}
+<tr>
+<td>{{ reader.id }}</td>
+<td>{{ reader.user.email }}</td>
+<td>{{ reader.user.first_name }}</td>
+<td>{{ reader.user.last_name }}</td>
+<td>{{ reader.address }}</td>
+<td>{{ reader.phone_number }}</td>
+</tr>
+{% endfor %}
+</table>
+</div>
+{% endblock %}
