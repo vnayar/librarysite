@@ -12,6 +12,7 @@ urlpatterns = patterns('',
     url(r'^admin$', 'library.views.admin_view', name='admin'),
     url(r'^admin/reader$', 'library.views.admin_reader', name='admin_reader'),
     url(r'^admin/reader/add$', 'library.views.admin_reader_add', name='admin_reader_add'),
+    url(r'^admin/bookcopy$', 'library.views.admin_bookcopy', name='admin_bookcopy'),
     # Examples:
     # url(r'^$', 'librarysite.views.home', name='home'),
     # url(r'^librarysite/', include('librarysite.foo.urls')),

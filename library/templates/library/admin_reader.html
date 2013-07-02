@@ -6,16 +6,15 @@ Library Admin
 
 {% block content %}
 <h1>Manage Readers</h1>
-<nav>
-  <ul>
-    <li><a href="{% url 'admin_reader' %}">Manage Readers</a></li>
-    <li class="active">Admin</li>
-  </ul>
-</nav>
+
+<ul class="breadcrumb">
+  <li><a href="{% url 'admin' %}">Admin</a> <span class="divider">/</span></li>
+  <li class="active">Reader List</li>
+</ul>
 
 <div>
 <div><a href="{% url 'admin_reader_add' %}">Add Reader</a></div>
-<table id="reader-list">
+<table id="reader-list" class="table">
 <tr>
   <th>ID</th>
   <th>Email</th>

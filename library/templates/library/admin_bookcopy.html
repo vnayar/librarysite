@@ -1,0 +1,53 @@
+{% extends "library/base.html" %}
+
+{% block title %}
+Admin Book Copy List
+{% endblock %}
+
+{% block content %}
+
+<ul class="breadcrumb">
+  <li><a href="{% url 'admin' %}">Admin</a> <span class="divider">/</span></li>
+  <li class="active">Book Copy List</li>
+</ul>
+
+<table class="table">
+<tr>
+<th>ID</th>
+<th>Copy #</th>
+<th>Position</th>
+<th>Title</th>
+</tr>
+{% for bookcopy in bookcopy_list %}
+<tr>
+<td>{{bookcopy.id}}</td>
+<td>{{bookcopy.copy_number}}</td>
+<td>{{bookcopy.position}}</td>
+<td>{{bookcopy.book.title}}</td>
+</tr>
+{% endfor %}
+</table>
+
+<div class="pagination">
+  <ul>
+    {% if page == 1 %}
+    <li class="disabled"><span>&laquo;</span></li>
+    {% else %}
+    <li><a href="{% url 'admin_bookcopy'%}?page={{page_prev}}">&laquo;</a></li>
+    {% endif %}
+
+    {% for i in pages %}
+    <li {% if i == page %} class="active" {% endif %}>
+      <a href="{% url 'admin_bookcopy'%}?page={{i}}">{{i}}</a>
+    </li>
+    {% endfor %}
+
+    {% if page == page_count %}
+    <li class="disabled" ><span>&raquo;</span></li>
+    {% else %}
+    <li><a href="{% url 'admin_bookcopy'%}?page={{page_next}}">&raquo;</a></li>
+    {% endif %}
+  </ul>
+</div>
+
+{% endblock %}

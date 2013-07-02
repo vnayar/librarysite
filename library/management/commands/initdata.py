@@ -33,6 +33,9 @@ class Command(BaseCommand):
         self.init_reader()
         self.stdout.write('Successfully created readers.')
 
+        self.init_bookcopy()
+        self.stdout.write('Successfully created book copies.')
+
 
     def rand_join(self, char, *args):
         """
@@ -136,5 +139,15 @@ class Command(BaseCommand):
             reader = Reader(user=user, address=address, phone_number=phone_number)
             reader.save()
 
-
-            
+    def init_bookcopy(self):
+        """
+        Create a random number of copies of each book for each branch.
+        """
+        for library_branch in LibraryBranch.objects.all():
+            for book in Book.objects.all():
+                for copy_number in range(0, random.randint(1, 3)):
+                    position = ''.join(random.choice(string.ascii_uppercase + string.digits)
+                                       for x in range(0, 6))
+                    bookcopy = BookCopy(book=book, library_branch=library_branch,
+                                        copy_number=copy_number, position=position)
+                    bookcopy.save()

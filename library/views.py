@@ -7,7 +7,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 
-from .models import Reader
+from .models import Reader, BookCopy
 
 
 def index(request):
@@ -56,12 +56,6 @@ def admin_reader(request):
     context = { "readers" : readers }
     return render(request, 'library/admin_reader.html', context)
 
-@login_required
-def admin_reader(request):
-    readers = Reader.objects.all()
-    context = { "readers" : readers }
-    return render(request, 'library/admin_reader.html', context)
-
 
 class ReaderForm(forms.Form):
     email = forms.EmailField()
@@ -99,3 +93,22 @@ def admin_reader_add(request):
     return render(request, 'library/admin_reader_add.html', {
         'form': form,
     })
+
+@login_required
+def admin_bookcopy(request):
+    page = int(request.GET.get('page', '1'))
+    limit = 10
+    offset = limit * (page - 1)
+
+    bookcopy_list = BookCopy.objects.all()[offset : offset + limit]
+    page_count = BookCopy.objects.count() / limit + 1
+    context = {
+        "bookcopy_list" : bookcopy_list,
+        "page_count" : page_count,
+        "page" : page,
+        "pages" : range(1, page_count + 1),
+        "page_prev" : max(page - 1, 1),
+        "page_next" : min(page + 1, page_count)
+        }
+    return render(request, 'library/admin_bookcopy.html', context)
+
