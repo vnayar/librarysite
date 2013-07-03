@@ -1,7 +1,7 @@
 {% extends "library/base.html" %}
 
 {% block title %}
-Admin Book Copy List
+Admin Library Branch List
 {% endblock %}
 
 {% block content %}
@@ -11,21 +11,18 @@ Admin Book Copy List
   <li class="active">Book Copy List</li>
 </ul>
 
-<h2>Book Copy List</h2>
-<a href="{% url 'admin_bookcopy_add' %}">Add Book Copy</a>
+<h2>Library Branch List</h2>
 <table class="table">
 <tr>
 <th>ID</th>
-<th>Copy #</th>
-<th>Position</th>
-<th>Title</th>
+<th>Name</th>
+<th>Address</th>
 </tr>
-{% for bookcopy in bookcopy_list %}
+{% for librarybranch in librarybranch_list %}
 <tr>
-<td>{{bookcopy.id}}</td>
-<td>{{bookcopy.copy_number}}</td>
-<td>{{bookcopy.position}}</td>
-<td>{{bookcopy.book.title}}</td>
+<td>{{librarybranch.id}}</td>
+<td>{{librarybranch.name}}</td>
+<td>{{librarybranch.address}}</td>
 </tr>
 {% endfor %}
 </table>

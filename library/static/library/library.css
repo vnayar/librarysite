@@ -10,3 +10,13 @@ table, th, td
 border: 1px solid black;
 padding: 5px;
 }
+
+body
+{
+    background-color: WhiteSmoke;
+}
+
+div.container
+{
+    background-color: White;
+}

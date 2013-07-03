@@ -7,7 +7,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 
-from .models import Reader, BookCopy
+from .models import Reader, Book, BookCopy, LibraryBranch
 
 
 def index(request):
@@ -51,13 +51,46 @@ def admin_view(request):
     return render(request, 'library/admin.html', context)
 
 @login_required
+def admin_librarybranch(request):
+    page = int(request.GET.get('page', '1'))
+    limit = 10
+    offset = limit * (page - 1)
+
+    librarybranch_list = LibraryBranch.objects.all()[offset : offset + limit]
+    page_count = LibraryBranch.objects.count() / limit + 1
+    context = {
+        "librarybranch_list" : librarybranch_list,
+        "page_count" : page_count,
+        "page" : page,
+        "pages" : range(1, page_count + 1),
+        "page_prev" : max(page - 1, 1),
+        "page_next" : min(page + 1, page_count)
+        }
+    return render(request, 'library/admin_librarybranch.html', context)
+
+@login_required
 def admin_reader(request):
-    readers = Reader.objects.all()
-    context = { "readers" : readers }
+    page = int(request.GET.get('page', '1'))
+    limit = 10
+    offset = limit * (page - 1)
+
+    reader_list = Reader.objects.all()[offset : offset + limit]
+    page_count = Reader.objects.count() / limit + 1
+    context = {
+        "reader_list" : reader_list,
+        "page_count" : page_count,
+        "page" : page,
+        "pages" : range(1, page_count + 1),
+        "page_prev" : max(page - 1, 1),
+        "page_next" : min(page + 1, page_count)
+        }
     return render(request, 'library/admin_reader.html', context)
 
 
 class ReaderForm(forms.Form):
+    """
+    Form for adding a new Reader.
+    """
     email = forms.EmailField()
     first_name = forms.CharField(max_length=30)
     last_name = forms.CharField(max_length=30)
@@ -111,4 +144,47 @@ def admin_bookcopy(request):
         "page_next" : min(page + 1, page_count)
         }
     return render(request, 'library/admin_bookcopy.html', context)
+
+class BookCopyForm(forms.Form):
+    """
+    Form for adding a new BookCopy.
+    """
+    library_branch = forms.ChoiceField(label="Library Branch",
+                                       choices=(),
+                                       widget=forms.Select())
+    book = forms.ChoiceField(label="Book",
+                             choices=(),
+                             widget=forms.Select())
+    copy_number = forms.IntegerField(label="Copy Number", min_value=1)
+    position = forms.CharField(max_length=30)
+
+    def __init__(self, *args, **kwargs):
+        super(BookCopyForm, self).__init__(*args, **kwargs)
+        library_branch_choices = [(lb.id, lb.name) for lb in LibraryBranch.objects.all()]
+        self.fields['library_branch'].choices = library_branch_choices
+        book_choices = [(b.id, b.title[0:40]) for b in Book.objects.all()]
+        self.fields['book'].choices = book_choices
+
+
+@login_required
+def admin_bookcopy_add(request):
+    if request.method == 'POST':
+        # Handle form submission.
+        form = BookCopyForm(request.POST) # Initialize form with data.
+        if form.is_valid():
+            bookcopy = BookCopy()
+            bookcopy.book = Book.objects.get(
+                id=form.cleaned_data['book'])
+            bookcopy.library_branch = LibraryBranch.objects.get(
+                id=form.cleaned_data['library_branch'])
+            bookcopy.copy_number = form.cleaned_data['copy_number']
+            bookcopy.position = form.cleaned_data['position']
+            bookcopy.save()
+            return HttpResponseRedirect(reverse('admin_bookcopy')) # Redirect after POST
+    else:
+        form = BookCopyForm() # An unbound form
+
+    return render(request, 'library/admin_bookcopy_add.html', {
+        'form': form,
+    })
 

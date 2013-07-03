@@ -1,0 +1,19 @@
+{% extends "library/base.html" %}
+
+{% block title %}
+Admin Reader Add
+{% endblock %}
+
+<ul class="breadcrumb">
+  <li><a href="{% url 'admin' %}">Admin</a> <span class="divider">/</span></li>
+  <li><a href="{% url 'admin_bookcopy' %}">Book Copy List</a> <span class="divider">/</span></li>
+  <li class="active">Book Copy Add</li>
+</ul>
+
+{% block content %}
+<h2>Book Copy Add</h2>
+<form action="{% url 'admin_bookcopy_add' %}" method="post">{% csrf_token %}
+{{ form.as_p }}
+<input type="submit" value="Submit" />
+</form>
+{% endblock %}

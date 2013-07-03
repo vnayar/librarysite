@@ -1,17 +1,16 @@
 {% extends "library/base.html" %}
 
 {% block title %}
-Library Admin
+Admin Reader List
 {% endblock %}
 
 {% block content %}
-<h1>Manage Readers</h1>
-
 <ul class="breadcrumb">
   <li><a href="{% url 'admin' %}">Admin</a> <span class="divider">/</span></li>
   <li class="active">Reader List</li>
 </ul>
 
+<h2>Reader List</h2>
 <div>
 <div><a href="{% url 'admin_reader_add' %}">Add Reader</a></div>
 <table id="reader-list" class="table">
@@ -23,7 +22,7 @@ Library Admin
   <th>Address</th>
   <th>Phone #</th>
 </tr>
-{% for reader in readers %}
+{% for reader in reader_list %}
 <tr>
 <td>{{ reader.id }}</td>
 <td>{{ reader.user.email }}</td>
@@ -35,4 +34,27 @@ Library Admin
 {% endfor %}
 </table>
 </div>
+
+<div class="pagination">
+  <ul>
+    {% if page == 1 %}
+    <li class="disabled"><span>&laquo;</span></li>
+    {% else %}
+    <li><a href="{% url 'admin_reader'%}?page={{page_prev}}">&laquo;</a></li>
+    {% endif %}
+
+    {% for i in pages %}
+    <li {% if i == page %} class="active" {% endif %}>
+      <a href="{% url 'admin_reader'%}?page={{i}}">{{i}}</a>
+    </li>
+    {% endfor %}
+
+    {% if page == page_count %}
+    <li class="disabled" ><span>&raquo;</span></li>
+    {% else %}
+    <li><a href="{% url 'admin_reader'%}?page={{page_next}}">&raquo;</a></li>
+    {% endif %}
+  </ul>
+</div>
+
 {% endblock %}

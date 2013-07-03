@@ -55,7 +55,7 @@ class BookCopy(models.Model):
     book = models.ForeignKey(Book)
     library_branch = models.ForeignKey(LibraryBranch)
     copy_number = models.IntegerField()
-    position = models.CharField(max_length=6)
+    position = models.CharField(max_length=6, unique=True)
 
     # Information about who/when the book was borrowed.
     reader = models.ForeignKey(Reader, null=True)
