@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
@@ -8,7 +9,6 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 
 from .models import Reader, Book, BookCopy, LibraryBranch
-
 
 def index(request):
     context = {}
@@ -41,16 +41,13 @@ def logout_view(request):
     return HttpResponseRedirect("/library/")
 
 @login_required
-def dashboard_view(request):
-    context = {}
-    return render(request, 'library/dashboard.html', context)
-
-@login_required
+@staff_member_required
 def admin_view(request):
     context = {}
     return render(request, 'library/admin.html', context)
 
 @login_required
+@staff_member_required
 def admin_librarybranch(request):
     page = int(request.GET.get('page', '1'))
     limit = 10
@@ -69,6 +66,7 @@ def admin_librarybranch(request):
     return render(request, 'library/admin_librarybranch.html', context)
 
 @login_required
+@staff_member_required
 def admin_reader(request):
     page = int(request.GET.get('page', '1'))
     limit = 10
@@ -99,6 +97,7 @@ class ReaderForm(forms.Form):
     
 
 @login_required
+@staff_member_required
 def admin_reader_add(request):
     if request.method == 'POST':
         # Handle form submission.
@@ -128,6 +127,7 @@ def admin_reader_add(request):
     })
 
 @login_required
+@staff_member_required
 def admin_bookcopy(request):
     page = int(request.GET.get('page', '1'))
     limit = 10
@@ -167,6 +167,7 @@ class BookCopyForm(forms.Form):
 
 
 @login_required
+@staff_member_required
 def admin_bookcopy_add(request):
     if request.method == 'POST':
         # Handle form submission.
@@ -187,4 +188,46 @@ def admin_bookcopy_add(request):
     return render(request, 'library/admin_bookcopy_add.html', {
         'form': form,
     })
+
+@login_required
+def dashboard_view(request):
+    context = {}
+    return render(request, 'library/dashboard.html', context)
+
+@login_required
+def reader_bookcopy(request):
+    page = int(request.GET.get('page', '1'))
+    limit = 10
+    offset = limit * (page - 1)
+
+    bookcopy_list = []
+    query = request.GET.get('q', None)
+    search_by = request.GET.get('by', None)
+    if query:
+        if search_by == 'title':
+            print "Filtering on title"
+            bookcopy_list = BookCopy.objects.filter(book__title__icontains=query)
+        elif search_by == 'isbn':
+            print "Filtering on isbn"
+            bookcopy_list = BookCopy.objects.filter(book__isbn__icontains=query)
+        elif search_by == 'publisher':
+            print "Filtering on publisher"
+            bookcopy_list = BookCopy.objects.filter(book__publisher__name__icontains=query)
+    else:
+        bookcopy_list = BookCopy.objects.all()
+
+    page_count = len(bookcopy_list) / limit + 1
+    bookcopy_list = bookcopy_list[offset : offset + limit]
+    context = {
+        "query" : query,
+        "search_by" : search_by,
+        "bookcopy_list" : bookcopy_list,
+        "page_count" : page_count,
+        "page" : page,
+        "pages" : range(1, page_count + 1),
+        "page_prev" : max(page - 1, 1),
+        "page_next" : min(page + 1, page_count)
+        }
+    return render(request, 'library/reader_bookcopy.html', context)
+
 

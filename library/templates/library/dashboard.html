@@ -1,0 +1,15 @@
+{% extends "library/base.html" %}
+
+{% block title %}
+Library Dashboard
+{% endblock %}
+
+{% block content %}
+<h2>Dashboard</h2>
+
+<ul class="nav nav-list">
+  <li class="nav-header">Dashboard</li>
+  <li><a href="{% url 'reader_search' %}">Book Search</a></li>
+</ul>
+
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends "library/base.html" %}
+
+{% block title %}
+Search Book Copy List
+{% endblock %}
+
+{% block content %}
+
+<ul class="breadcrumb">
+  <li><a href="{% url 'dashboard' %}">Dashboard</a> <span class="divider">/</span></li>
+  <li class="active">Book Copy List</li>
+</ul>
+
+<h2>Book Copy List</h2>
+
+
+<div class="navbar">
+  <div class="navbar-inner">
+    <ul class="nav">
+      <form class="navbar-search pull-left" action="{% url 'reader_bookcopy'  %}"
+            method="get">
+        <input type="text" class="search-query" name="q" placeholder="Search">
+        <select name="by">
+          <option value="title" selected="true">Title</option>
+          <option value="isbn">ISBN</option>
+          <option value="publisher">Publisher name</option>
+        </select>
+        <button id="search-button" type="submit" class="btn">Submit</button>
+      </form>
+    </ul>
+  </div>
+</div>
+
+<table class="table">
+<tr>
+<th>ID</th>
+<th>Copy #</th>
+<th>Position</th>
+<th>Title</th>
+</tr>
+{% for bookcopy in bookcopy_list %}
+<tr>
+<td>{{bookcopy.id}}</td>
+<td>{{bookcopy.copy_number}}</td>
+<td>{{bookcopy.position}}</td>
+<td>{{bookcopy.book.title}}</td>
+</tr>
+{% endfor %}
+</table>
+
+<div class="pagination">
+  <ul>
+    {% load library_extras %}
+    {% if page == 1 %}
+    <li class="disabled"><span>&laquo;</span></li>
+    {% else %}
+    <li><a href="{{ request.path }}{% query_string 'page=page_prev' '' %}">&laquo;</a></li>
+    {% endif %}
+
+    {% for i in pages %}
+    <li {% if i == page %} class="active" {% endif %}>
+      <a href="{{ request.path }}{% query_string 'page=i' '' %}">{{i}}</a>
+    </li>
+    {% endfor %}
+
+    {% if page == page_count %}
+    <li class="disabled" ><span>&raquo;</span></li>
+    {% else %}
+    <li><a href="{{ request.path }}{% query_string 'page=page_next' '' %}">&raquo;</a></li>
+    {% endif %}
+  </ul>
+</div>
+
+{% endblock %}
+
