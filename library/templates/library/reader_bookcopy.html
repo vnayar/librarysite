@@ -34,16 +34,23 @@ Search Book Copy List
 <table class="table">
 <tr>
 <th>ID</th>
+<th>Library Branch</th>
 <th>Copy #</th>
 <th>Position</th>
 <th>Title</th>
+<th>ISBN</th>
+<th>Publisher</th>
 </tr>
 {% for bookcopy in bookcopy_list %}
+<!-- Button to trigger modal -->
 <tr>
-<td>{{bookcopy.id}}</td>
+<td><a href="{% url 'reader_checkout' %}?id={{bookcopy.id}}" role="button" data-toggle="modal">{{bookcopy.id}}</a></td>
+<td>{{bookcopy.library_branch.name}}</td>
 <td>{{bookcopy.copy_number}}</td>
 <td>{{bookcopy.position}}</td>
 <td>{{bookcopy.book.title}}</td>
+<td>{{bookcopy.book.isbn}}</td>
+<td>{{bookcopy.book.publisher.name}}</td>
 </tr>
 {% endfor %}
 </table>

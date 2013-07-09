@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import User
-from library.models import (Author, Publisher, Book, BookAuthor, LibraryBranch,
+from library.models import (Author, Publisher, Book, LibraryBranch,
                             Reader, BookCopy)
 
 from datetime import date
@@ -23,9 +23,6 @@ class Command(BaseCommand):
 
         self.init_book()
         self.stdout.write('Successfully created books.')
-
-        self.init_bookauthor()
-        self.stdout.write('Successfully created book authors.')
 
         self.init_librarybranch()
         self.stdout.write('Successfully created library branches.')
@@ -80,6 +77,7 @@ class Command(BaseCommand):
         # Define a boundary on random dates.
         start_date = date(1983, 1, 1).toordinal()
         end_date = date.today().toordinal()
+        authors = Author.objects.all()
         # Now generate the data for books.
         for publisher in Publisher.objects.all():
             # Each publisher will get 2 books.
@@ -93,16 +91,11 @@ class Command(BaseCommand):
                 book = Book(title=title, isbn=isbn, publisher=publisher,
                             publication_date=publication_date)
                 book.save()
+                # Now associate the book with a number of authors.
+                for x in range(0, random.randint(1, 3)):
+                    author = authors[random.randint(0, len(authors)-1)]
+                    book.authors.add(author)
 
-    def init_bookauthor(self):
-        authors = Author.objects.values_list("id")
-        author_index = 0
-        for book in Book.objects.all():
-            # Pick a random author or so, associate the book with it.
-            for x in range(0, random.randint(1, 3)):
-                book_author = BookAuthor(book=book, author_id=authors[author_index][0])
-                author_index = (author_index + 1) % len(authors)
-                book_author.save()
 
     def init_librarybranch(self):
         for x in range(0, 5):

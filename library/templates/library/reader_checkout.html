@@ -1,0 +1,19 @@
+{% extends "library/base.html" %}
+
+{% block title %}
+Book Checkout
+{% endblock %}
+
+<ul class="breadcrumb">
+  <li><a href="{% url 'dashboard' %}">Dashboard</a> <span class="divider">/</span></li>
+  <li><a href="{% url 'reader_bookcopy' %}">Book Copy List</a> <span class="divider">/</span></li>
+  <li class="active">Book Checkout</li>
+</ul>
+
+{% block content %}
+<h2>Book Checkout</h2>
+<form action="{% url 'reader_checkout' %}" method="post">{% csrf_token %}
+{{ form.as_p }}
+<input type="submit" value="Submit" />
+</form>
+{% endblock %}

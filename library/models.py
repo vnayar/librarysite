@@ -24,14 +24,7 @@ class Book(models.Model):
     isbn = models.CharField(max_length=13)
     publisher = models.ForeignKey(Publisher)
     publication_date = models.DateField()
-
-class BookAuthor(models.Model):
-    """
-    Association between books and authors.
-    This table is needed because one book may have multiple authors.
-    """
-    book = models.ForeignKey(Book)
-    author = models.ForeignKey(Author)
+    authors = models.ManyToManyField(Author)
 
 class LibraryBranch(models.Model):
     """

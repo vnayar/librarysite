@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import render
 
 from .models import Reader, Book, BookCopy, LibraryBranch
@@ -230,4 +230,46 @@ def reader_bookcopy(request):
         }
     return render(request, 'library/reader_bookcopy.html', context)
 
+class BookCopyCheckoutForm(forms.Form):
+    id = forms.IntegerField(label='ID', widget=forms.HiddenInput())
+    title = forms.CharField(
+        widget=forms.TextInput(attrs={'readonly':'readonly'}))
+    authors = forms.CharField(
+        widget=forms.TextInput(attrs={'readonly':'readonly'}))
+
+    CHECKOUT_CHOICES = (('checkout', 'Checkout',), ('reserve', 'Reserve',))
+    choice_field = forms.ChoiceField(widget=forms.RadioSelect, choices=CHECKOUT_CHOICES)
+
+    def __init__(self, bookcopy, *args, **kwargs):
+        super(BookCopyCheckoutForm, self).__init__(*args, **kwargs)
+        if bookcopy:
+            self.fields['id'].initial = bookcopy.id
+            self.fields['title'].initial = bookcopy.book.title
+            # Combine all the authors into a comma separated list.
+            self.fields['authors'].initial = reduce(
+                lambda author_string, author: author_string + author.name + ", ",
+                bookcopy.book.authors.all(),
+                "")
+
+@login_required
+def reader_checkout(request):
+    bookcopy = None
+    if request.method == 'POST':
+        form = BookCopyCheckoutForm(None, request.POST)
+        print request.POST
+        if form.is_valid():
+            # TODO:  Stuff.
+            return HttpResponseRedirect(reverse('reader_bookcopy')) # Redirect after POST
+    else:
+        id = int(request.GET.get('id', None))
+        if not id:
+            raise Http404
+        bookcopy = BookCopy.objects.get(id=id)
+        form = BookCopyCheckoutForm(bookcopy)
+
+    context = {
+        "bookcopy" : bookcopy,
+        "form" : form
+        }
+    return render(request, 'library/reader_checkout.html', context)
 
