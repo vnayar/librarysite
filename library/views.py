@@ -1,3 +1,6 @@
+from datetime import datetime
+import pytz
+
 from django import forms
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import login, logout, authenticate
@@ -236,11 +239,14 @@ class BookCopyCheckoutForm(forms.Form):
         widget=forms.TextInput(attrs={'readonly':'readonly'}))
     authors = forms.CharField(
         widget=forms.TextInput(attrs={'readonly':'readonly'}))
+    status = forms.CharField(required=False,
+        widget=forms.TextInput(attrs={'readonly':'readonly'}))
 
-    CHECKOUT_CHOICES = (('checkout', 'Checkout',), ('reserve', 'Reserve',))
-    choice_field = forms.ChoiceField(widget=forms.RadioSelect, choices=CHECKOUT_CHOICES)
 
-    def __init__(self, bookcopy, *args, **kwargs):
+    ACTION_CHOICES = (('checkout', 'Checkout',), ('reserve', 'Reserve',))
+    action = forms.ChoiceField(widget=forms.RadioSelect, choices=ACTION_CHOICES)
+
+    def __init__(self, bookcopy, status, *args, **kwargs):
         super(BookCopyCheckoutForm, self).__init__(*args, **kwargs)
         if bookcopy:
             self.fields['id'].initial = bookcopy.id
@@ -250,22 +256,36 @@ class BookCopyCheckoutForm(forms.Form):
                 lambda author_string, author: author_string + author.name + ", ",
                 bookcopy.book.authors.all(),
                 "")
+            if status:
+                self.fields['status'].initial = status
 
 @login_required
 def reader_checkout(request):
     bookcopy = None
     if request.method == 'POST':
-        form = BookCopyCheckoutForm(None, request.POST)
-        print request.POST
+        form = BookCopyCheckoutForm(None, None, request.POST)
         if form.is_valid():
-            # TODO:  Stuff.
+            id = form.cleaned_data['id']
+            action = form.cleaned_data['action']
+            bookcopy = BookCopy.objects.get(id=id)
+            bookcopy.user = request.user
+            now = datetime.now(pytz.utc)
+            if bookcopy.is_available(request.user, now):
+                if action == 'checkout':
+                    bookcopy.borrow_date = now
+                elif action == 'reserve':
+                    bookcopy.reserve_date = now
+                bookcopy.save()
+            else:
+                return HttpResponse("Book is not available!")
             return HttpResponseRedirect(reverse('reader_bookcopy')) # Redirect after POST
     else:
         id = int(request.GET.get('id', None))
         if not id:
             raise Http404
         bookcopy = BookCopy.objects.get(id=id)
-        form = BookCopyCheckoutForm(bookcopy)
+        status = bookcopy.status(request.user, datetime.now(pytz.utc))
+        form = BookCopyCheckoutForm(bookcopy, status)
 
     context = {
         "bookcopy" : bookcopy,

@@ -63,7 +63,7 @@ MEDIA_ROOT = ''
 MEDIA_URL = ''
 
 # Used when a user accesses a page that needs a login.
-LOGIN_REDIRECT_URL = '/library/login'
+LOGIN_URL = '/library/login'
 
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself; store your static files

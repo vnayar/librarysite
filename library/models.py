@@ -51,9 +51,42 @@ class BookCopy(models.Model):
     position = models.CharField(max_length=6, unique=True)
 
     # Information about who/when the book was borrowed.
-    reader = models.ForeignKey(Reader, null=True)
+    user = models.ForeignKey(User, null=True)
+    reserve_date = models.DateTimeField(null=True)
     borrow_date = models.DateTimeField(null=True)
     return_date = models.DateTimeField(null=True)
 
     # Meta-options of the model.
     unique_together = ('book', 'library_branch', 'copy_number')
+
+    def is_available(self, user, datetime):
+        """
+        Determine if a book is currenty available for checkout.
+        """
+        if self.user == None:
+            return True
+        if self.return_date and self.return_date < datetime:
+            return True
+        if self.borrow_date and self.borrow_date < datetime:
+            return False
+        if self.reserve_date and self.reserve_date < datetime and self.user != user:
+            return False
+        return True
+
+    def status(self, user, datetime):
+        """
+        Determine if a book is currenty available for checkout.
+        """
+        if self.user == None:
+            return 'available'
+        if self.return_date and self.return_date < datetime:
+            return 'available'
+        if self.borrow_date and self.borrow_date < datetime:
+            return 'loaned'
+        if self.reserve_date and self.reserve_date < datetime:
+            if self.user == user:
+                return 'reserved (you)'
+            else:
+                return 'reserved (other)'
+        return 'available'
+

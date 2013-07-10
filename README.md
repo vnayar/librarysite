@@ -6,13 +6,13 @@ A simple library site using the Django framework.
 Setup
 =====
 
-1. Create the database.
-  $ sudo mysqladmin create library
-2. Initialize the DB tables.
-  $ python manage.py syncdb
-3. Collect static files to be served.
-  $ python manage.py collectstatic
-4. Start the server.
-  $ python manage.py runserver
+1. Simply run the script "setup.sh"
+  $ ./setup.sh
+
+Running
+=======
+
+1. Run the script "run.sh".
+  $ ./run.sh
 
 The server will be running at http://localhost:8000/library/.
