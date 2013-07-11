@@ -50,11 +50,10 @@ class BookCopy(models.Model):
     copy_number = models.IntegerField()
     position = models.CharField(max_length=6, unique=True)
 
-    # Information about who/when the book was borrowed.
-    user = models.ForeignKey(User, null=True)
-    reserve_date = models.DateTimeField(null=True)
-    borrow_date = models.DateTimeField(null=True)
-    return_date = models.DateTimeField(null=True)
+    # A reference to the current checkout status of the book.
+    current_checkout = models.ForeignKey('BookCopyCheckout',
+                                         related_name='current_checkout',
+                                         null=True)
 
     # Meta-options of the model.
     unique_together = ('book', 'library_branch', 'copy_number')
@@ -63,30 +62,76 @@ class BookCopy(models.Model):
         """
         Determine if a book is currenty available for checkout.
         """
-        if self.user == None:
+        checkout = self.current_checkout
+        if checkout == None:
             return True
-        if self.return_date and self.return_date < datetime:
+        if checkout.return_date and checkout.return_date < datetime:
             return True
-        if self.borrow_date and self.borrow_date < datetime:
+        if checkout.borrow_date and checkout.borrow_date < datetime:
             return False
-        if self.reserve_date and self.reserve_date < datetime and self.user != user:
+        if checkout.reserve_date and checkout.reserve_date < datetime and checkout.user != user:
             return False
         return True
 
     def status(self, user, datetime):
         """
-        Determine if a book is currenty available for checkout.
+        Determine if a book is currenty available to borrow.
         """
-        if self.user == None:
+        checkout = self.current_checkout
+        if checkout == None:
             return 'available'
-        if self.return_date and self.return_date < datetime:
+        if checkout.return_date and checkout.return_date < datetime:
             return 'available'
-        if self.borrow_date and self.borrow_date < datetime:
+        if checkout.borrow_date and checkout.borrow_date < datetime:
             return 'loaned'
-        if self.reserve_date and self.reserve_date < datetime:
-            if self.user == user:
+        if checkout.reserve_date and checkout.reserve_date < datetime:
+            if checkout.user == user:
                 return 'reserved (you)'
             else:
                 return 'reserved (other)'
         return 'available'
+
+    def do_borrow(user, datetime):
+        if not self.is_available(user, datetime):
+            raise ValueError("Book is not available!")
+        if self.current_checkout and user == self.current_checkout.user:
+            self.current_checkout.borrow_date = datetime
+            self.current_checkout.save()
+        else:
+            self.current_checkout = BookCopyCheckout(
+                user=user, bookcopy=self, borrow_date=datetime)
+            self.current_checkout.save()
+            self.save()
+
+    def do_reserve(user, datetime):
+        if not self.is_available(user, datetime):
+            raise ValueError("Book is not available!")
+        if self.current_checkout and user == self.current_checkout.user:
+            self.current_checkout.reserve_date = datetime
+            self.current_checkout.save()
+        else:
+            self.current_checkout = BookCopyCheckout(
+                user=user, bookcopy=self, reserve_date=datetime)
+            self.current_checkout.save()
+            self.save()
+
+    def do_return(user, datetime):
+        if self.current_checkout and self.current_checkout.borrow_date:
+            self.current_checkout.return_date = datetime
+            self.current_checkout.save()
+            self.current_checkout = None
+            self.save()
+        else:
+            raise ValueError("Book was not borrowed!")
+
+class BookCopyCheckout(models.Model):
+    """
+    Separate information describing a book being checked out.
+    """
+    # Information about who/when the book was borrowed.
+    user = models.ForeignKey(User)
+    bookcopy = models.ForeignKey(BookCopy)
+    reserve_date = models.DateTimeField(null=True)
+    borrow_date = models.DateTimeField(null=True)
+    return_date = models.DateTimeField(null=True)
 
