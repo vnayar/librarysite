@@ -21,7 +21,9 @@ Search Book Copy List
             method="get">
         <input type="text" class="search-query" name="q" placeholder="Search">
         <select name="by">
-          <option value="title" selected="true">Title</option>
+          <option value="all" selected="true">All</option>
+          <option value="mine">Mine</option>
+          <option value="title">Title</option>
           <option value="isbn">ISBN</option>
           <option value="publisher">Publisher name</option>
         </select>
@@ -40,17 +42,19 @@ Search Book Copy List
 <th>Title</th>
 <th>ISBN</th>
 <th>Publisher</th>
+<th>Status</th>
 </tr>
 {% for bookcopy in bookcopy_list %}
 <!-- Button to trigger modal -->
 <tr>
 <td><a href="{% url 'reader_checkout' %}?id={{bookcopy.id}}" role="button" data-toggle="modal">{{bookcopy.id}}</a></td>
-<td>{{bookcopy.library_branch.name}}</td>
+<td>{{bookcopy.library_branch_name}}</td>
 <td>{{bookcopy.copy_number}}</td>
 <td>{{bookcopy.position}}</td>
-<td>{{bookcopy.book.title}}</td>
-<td>{{bookcopy.book.isbn}}</td>
-<td>{{bookcopy.book.publisher.name}}</td>
+<td>{{bookcopy.title}}</td>
+<td>{{bookcopy.isbn}}</td>
+<td>{{bookcopy.publisher_name}}</td>
+<td>{{bookcopy.status}}</td>
 </tr>
 {% endfor %}
 </table>

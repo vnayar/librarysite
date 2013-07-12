@@ -203,21 +203,38 @@ def reader_bookcopy(request):
     limit = 10
     offset = limit * (page - 1)
 
+    bookcopy_set = BookCopy.objects
     bookcopy_list = []
+
     query = request.GET.get('q', None)
     search_by = request.GET.get('by', None)
-    if query:
+    if search_by == 'mine':
+        bookcopy_set = bookcopy_set.filter(current_checkout__user=request.user)
+    elif query:
         if search_by == 'title':
             print "Filtering on title"
-            bookcopy_list = BookCopy.objects.filter(book__title__icontains=query)
+            bookcopy_set = bookcopy_set.filter(book__title__icontains=query)
         elif search_by == 'isbn':
             print "Filtering on isbn"
-            bookcopy_list = BookCopy.objects.filter(book__isbn__icontains=query)
+            bookcopy_set = bookcopy_set.filter(book__isbn__icontains=query)
         elif search_by == 'publisher':
             print "Filtering on publisher"
-            bookcopy_list = BookCopy.objects.filter(book__publisher__name__icontains=query)
-    else:
-        bookcopy_list = BookCopy.objects.all()
+            bookcopy_set = bookcopy_set.filter(book__publisher__name__icontains=query)
+
+    # Used for finding the status.
+    now = datetime.now(pytz.utc)
+
+    bookcopy_list = []
+    for bookcopy in bookcopy_set.all():
+        bookcopy_list.append({
+                "library_branch_name" : bookcopy.library_branch.name,
+                "copy_number" : bookcopy.copy_number,
+                "position": bookcopy.position,
+                "title" : bookcopy.book.title,
+                "isbn" : bookcopy.book.isbn,
+                "publisher_name" : bookcopy.book.publisher.name,
+                "status" : bookcopy.status(request.user, now)
+                })
 
     page_count = len(bookcopy_list) / limit + 1
     bookcopy_list = bookcopy_list[offset : offset + limit]
@@ -233,6 +250,7 @@ def reader_bookcopy(request):
         }
     return render(request, 'library/reader_bookcopy.html', context)
 
+
 class BookCopyCheckoutForm(forms.Form):
     id = forms.IntegerField(label='ID', widget=forms.HiddenInput())
     title = forms.CharField(
@@ -243,7 +261,10 @@ class BookCopyCheckoutForm(forms.Form):
         widget=forms.TextInput(attrs={'readonly':'readonly'}))
 
 
-    ACTION_CHOICES = (('checkout', 'Checkout',), ('reserve', 'Reserve',))
+    ACTION_CHOICES = (
+        ('borrow', 'Borrow',),
+        ('reserve', 'Reserve',),
+        ('return', 'Return',))
     action = forms.ChoiceField(widget=forms.RadioSelect, choices=ACTION_CHOICES)
 
     def __init__(self, bookcopy, status, *args, **kwargs):
@@ -268,14 +289,14 @@ def reader_checkout(request):
             id = form.cleaned_data['id']
             action = form.cleaned_data['action']
             bookcopy = BookCopy.objects.get(id=id)
-            bookcopy.user = request.user
             now = datetime.now(pytz.utc)
             if bookcopy.is_available(request.user, now):
-                if action == 'checkout':
-                    bookcopy.borrow_date = now
+                if action == 'borrow':
+                    bookcopy.do_borrow(request.user, now)
                 elif action == 'reserve':
-                    bookcopy.reserve_date = now
-                bookcopy.save()
+                    bookcopy.do_reserve(request.user, now)
+                elif action == 'return':
+                    bookcopy.do_return(request.user, now)
             else:
                 return HttpResponse("Book is not available!")
             return HttpResponseRedirect(reverse('reader_bookcopy')) # Redirect after POST

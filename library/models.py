@@ -91,31 +91,40 @@ class BookCopy(models.Model):
                 return 'reserved (other)'
         return 'available'
 
-    def do_borrow(user, datetime):
+    def do_borrow(self, user, datetime):
+        """
+        Update records for a user to borrow a book.
+        """
         if not self.is_available(user, datetime):
             raise ValueError("Book is not available!")
         if self.current_checkout and user == self.current_checkout.user:
             self.current_checkout.borrow_date = datetime
             self.current_checkout.save()
         else:
-            self.current_checkout = BookCopyCheckout(
-                user=user, bookcopy=self, borrow_date=datetime)
-            self.current_checkout.save()
+            checkout = BookCopyCheckout(user=user, bookcopy=self, borrow_date=datetime)
+            checkout.save()
+            self.current_checkout = checkout
             self.save()
 
-    def do_reserve(user, datetime):
+    def do_reserve(self, user, datetime):
+        """
+        Update records for a user to reserve a book.
+        """
         if not self.is_available(user, datetime):
             raise ValueError("Book is not available!")
         if self.current_checkout and user == self.current_checkout.user:
             self.current_checkout.reserve_date = datetime
             self.current_checkout.save()
         else:
-            self.current_checkout = BookCopyCheckout(
-                user=user, bookcopy=self, reserve_date=datetime)
-            self.current_checkout.save()
+            checkout = BookCopyCheckout(user=user, bookcopy=self, reserve_date=datetime)
+            checkout.save()
+            self.current_checkout = checkout
             self.save()
 
-    def do_return(user, datetime):
+    def do_return(self, user, datetime):
+        """
+        Update records for a user to return a book.
+        """
         if self.current_checkout and self.current_checkout.borrow_date:
             self.current_checkout.return_date = datetime
             self.current_checkout.save()
