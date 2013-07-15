@@ -6,12 +6,13 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import render
 
-from .models import Reader, Book, BookCopy, LibraryBranch
+from .models import Reader, Book, BookCopy, BookCopyCheckout, LibraryBranch
 
 def index(request):
     context = {}
@@ -97,6 +98,8 @@ class ReaderForm(forms.Form):
     last_name = forms.CharField(max_length=30)
     address = forms.CharField()
     phone_number = forms.CharField(max_length=20)
+    username = forms.CharField(max_length=20)
+    password = forms.CharField(max_length=20)
     
 
 @login_required
@@ -113,6 +116,8 @@ def admin_reader_add(request):
             user.email = form.cleaned_data['email']
             user.first_name = form.cleaned_data['first_name']
             user.last_name = form.cleaned_data['last_name']
+            user.username = form.cleaned_data['username']
+            user.password = make_password(form.cleaned_data['password'])
             user.save()
             # New create a reader object.
             reader = Reader()
@@ -227,6 +232,7 @@ def reader_bookcopy(request):
     bookcopy_list = []
     for bookcopy in bookcopy_set.all():
         bookcopy_list.append({
+                "id" : bookcopy.id,
                 "library_branch_name" : bookcopy.library_branch.name,
                 "copy_number" : bookcopy.copy_number,
                 "position": bookcopy.position,
@@ -253,6 +259,7 @@ def reader_bookcopy(request):
 
 class BookCopyCheckoutForm(forms.Form):
     id = forms.IntegerField(label='ID', widget=forms.HiddenInput())
+    # Some informational fields so the user knows what they are checking out.
     title = forms.CharField(
         widget=forms.TextInput(attrs={'readonly':'readonly'}))
     authors = forms.CharField(
@@ -282,25 +289,42 @@ class BookCopyCheckoutForm(forms.Form):
 
 @login_required
 def reader_checkout(request):
+    """
+    A form used by the reader to borrow, reserve, or return a book.
+    """
     bookcopy = None
     if request.method == 'POST':
+
+        # A 'POST' request is for form submission.
         form = BookCopyCheckoutForm(None, None, request.POST)
         if form.is_valid():
             id = form.cleaned_data['id']
             action = form.cleaned_data['action']
-            bookcopy = BookCopy.objects.get(id=id)
             now = datetime.now(pytz.utc)
-            if bookcopy.is_available(request.user, now):
-                if action == 'borrow':
-                    bookcopy.do_borrow(request.user, now)
-                elif action == 'reserve':
-                    bookcopy.do_reserve(request.user, now)
-                elif action == 'return':
-                    bookcopy.do_return(request.user, now)
-            else:
-                return HttpResponse("Book is not available!")
+            bookcopy = BookCopy.objects.get(id=id)
+
+            if action == 'borrow' or action == 'reserve':
+                # Make sure the user does not check out more than 10 books at a time.
+                checkout_count = len(filter(
+                        lambda checkout: checkout.is_current(now),
+                        BookCopyCheckout.objects.filter(user=request.user)))
+                if checkout_count > 10:
+                    return HttpResponse("User may not borrow or reserve more than 10 books!")
+
+                # Now perform the requested action.
+                if bookcopy.is_available(request.user, now):
+                    if action == 'borrow':
+                        bookcopy.do_borrow(request.user, now)
+                    elif action == 'reserve':
+                        bookcopy.do_reserve(request.user, now)
+                else:
+                    return HttpResponse("Book is not available!")
+            elif action == 'return':
+                bookcopy.do_return(request.user, now)
+
             return HttpResponseRedirect(reverse('reader_bookcopy')) # Redirect after POST
     else:
+        # A 'GET' request is to view the form.
         id = int(request.GET.get('id', None))
         if not id:
             raise Http404

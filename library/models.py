@@ -1,3 +1,5 @@
+from datetime import date, datetime
+
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -58,75 +60,79 @@ class BookCopy(models.Model):
     # Meta-options of the model.
     unique_together = ('book', 'library_branch', 'copy_number')
 
-    def is_available(self, user, datetime):
+    def is_available(self, user, now):
         """
         Determine if a book is currenty available for checkout.
         """
         checkout = self.current_checkout
         if checkout == None:
             return True
-        if checkout.return_date and checkout.return_date < datetime:
+        if not checkout.is_current(now):
+            # Erase the current_checkout if it is no longer valid.
+            self.current_checkout = None
+            self.save()
             return True
-        if checkout.borrow_date and checkout.borrow_date < datetime:
-            return False
-        if checkout.reserve_date and checkout.reserve_date < datetime and checkout.user != user:
-            return False
-        return True
+        # At this point, there must be a checkout that is current.
+        if checkout.reserve_date and checkout.user == user and not checkout.borrow_date:
+            # The user may borrow a book they have reserved.
+            return True
+        return False
 
-    def status(self, user, datetime):
+    def status(self, user, now):
         """
         Determine if a book is currenty available to borrow.
         """
         checkout = self.current_checkout
-        if checkout == None:
-            return 'available'
-        if checkout.return_date and checkout.return_date < datetime:
-            return 'available'
-        if checkout.borrow_date and checkout.borrow_date < datetime:
-            return 'loaned'
-        if checkout.reserve_date and checkout.reserve_date < datetime:
-            if checkout.user == user:
+        if self.is_available(user, now):
+            if checkout and checkout.reserve_date:
                 return 'reserved (you)'
             else:
-                return 'reserved (other)'
-        return 'available'
+                return 'available'
+        # If the book is not available, then there is a current_checkout.
+        if checkout.borrow_date:
+            return 'borrowed'
+        if checkout.reserve_date:
+            return 'reserved (other)'
+        raise ValueError("BookCopy current_checkout in bad state!")
 
-    def do_borrow(self, user, datetime):
+    def do_borrow(self, user, now):
         """
         Update records for a user to borrow a book.
         """
-        if not self.is_available(user, datetime):
+        if not self.is_available(user, now):
             raise ValueError("Book is not available!")
-        if self.current_checkout and user == self.current_checkout.user:
-            self.current_checkout.borrow_date = datetime
+        if self.current_checkout and self.current_checkout.user == user:
+            # Checkout exists (a reservation), so update it.
+            self.current_checkout.borrow_date = now
             self.current_checkout.save()
         else:
-            checkout = BookCopyCheckout(user=user, bookcopy=self, borrow_date=datetime)
+            # Create a new checkout.
+            checkout = BookCopyCheckout(user=user, bookcopy=self, borrow_date=now)
             checkout.save()
             self.current_checkout = checkout
             self.save()
 
-    def do_reserve(self, user, datetime):
+    def do_reserve(self, user, now):
         """
         Update records for a user to reserve a book.
         """
-        if not self.is_available(user, datetime):
+        if not self.is_available(user, now):
             raise ValueError("Book is not available!")
-        if self.current_checkout and user == self.current_checkout.user:
-            self.current_checkout.reserve_date = datetime
+        if self.current_checkout and self.current_checkout.user == user:
+            self.current_checkout.reserve_date = now
             self.current_checkout.save()
         else:
-            checkout = BookCopyCheckout(user=user, bookcopy=self, reserve_date=datetime)
+            checkout = BookCopyCheckout(user=user, bookcopy=self, reserve_date=now)
             checkout.save()
             self.current_checkout = checkout
             self.save()
 
-    def do_return(self, user, datetime):
+    def do_return(self, user, now):
         """
         Update records for a user to return a book.
         """
         if self.current_checkout and self.current_checkout.borrow_date:
-            self.current_checkout.return_date = datetime
+            self.current_checkout.return_date = now
             self.current_checkout.save()
             self.current_checkout = None
             self.save()
@@ -143,4 +149,29 @@ class BookCopyCheckout(models.Model):
     reserve_date = models.DateTimeField(null=True)
     borrow_date = models.DateTimeField(null=True)
     return_date = models.DateTimeField(null=True)
+
+    def is_current(self, now):
+        """
+        Determine if a checkout 'current' at a particular time.
+        A checkout is current if it solely determines the status of the book.
+        """
+        if self.return_date and self.return_date < now:
+            # Book has been returned, this checkout is not current.
+            return False
+        elif self.borrow_date and self.borrow_date < now:
+            # If there is a borrow date and no return, then it is current.
+            return True
+        elif self.reserve_date:
+            # See if the reserve has expired (6PM the day of the reservation).
+            reserve_expire_date = datetime(tzinfo=self.reserve_date.tzinfo,
+                year=self.reserve_date.year, month=self.reserve_date.month,
+                day=self.reserve_date.day, hour=18)
+            if self.reserve_date.hour >= reserve_expire_date.hour:
+                reserve_expire_date.day += 1
+            if now > reserve_expire_date:
+                return False
+            else:
+                return True
+        # No date information at all.
+        return False
 
