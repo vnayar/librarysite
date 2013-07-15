@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 
 from django import forms
@@ -256,6 +256,47 @@ def reader_bookcopy(request):
         }
     return render(request, 'library/reader_bookcopy.html', context)
 
+@login_required
+def reader_mybooks(request):
+    page = int(request.GET.get('page', '1'))
+    limit = 10
+    offset = limit * (page - 1)
+
+    bookcopy_list = []
+    bookcopy_set = BookCopy.objects.filter(current_checkout__user=request.user)
+
+    # Used for finding the status.
+    now = datetime.now(pytz.utc)
+
+    bookcopy_list = []
+    for bookcopy in bookcopy_set.all():
+        return_by_date = None
+        fine = bookcopy.current_checkout.get_fine(now)
+        if fine:
+            fine = '$%.2f' % fine
+        bookcopy_list.append({
+                "id" : bookcopy.id,
+                "library_branch_name" : bookcopy.library_branch.name,
+                "copy_number" : bookcopy.copy_number,
+                "title" : bookcopy.book.title,
+                "reserve_date" : bookcopy.current_checkout.reserve_date or "--",
+                "borrow_date" : bookcopy.current_checkout.borrow_date or "--",
+                "return_by_date" : return_by_date or "--",
+                "status" : bookcopy.status(request.user, now),
+                "fine" : fine or "--"
+                })
+
+    page_count = len(bookcopy_list) / limit + 1
+    bookcopy_list = bookcopy_list[offset : offset + limit]
+    context = {
+        "bookcopy_list" : bookcopy_list,
+        "page_count" : page_count,
+        "page" : page,
+        "pages" : range(1, page_count + 1),
+        "page_prev" : max(page - 1, 1),
+        "page_next" : min(page + 1, page_count)
+        }
+    return render(request, 'library/reader_mybooks.html', context)
 
 class BookCopyCheckoutForm(forms.Form):
     id = forms.IntegerField(label='ID', widget=forms.HiddenInput())
@@ -320,6 +361,7 @@ def reader_checkout(request):
                 else:
                     return HttpResponse("Book is not available!")
             elif action == 'return':
+                # The book does not need to be 'available' to return it.
                 bookcopy.do_return(request.user, now)
 
             return HttpResponseRedirect(reverse('reader_bookcopy')) # Redirect after POST

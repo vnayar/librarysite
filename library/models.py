@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from django.db import models
 from django.contrib.auth.models import User
@@ -85,14 +85,17 @@ class BookCopy(models.Model):
         checkout = self.current_checkout
         if self.is_available(user, now):
             if checkout and checkout.reserve_date:
-                return 'reserved (you)'
+                return 'reserved (mine)'
             else:
                 return 'available'
         # If the book is not available, then there is a current_checkout.
         if checkout.borrow_date:
-            return 'borrowed'
+            if checkout.user == user:
+                return 'borrowed (mine)'
+            else:
+                return 'borrowed'
         if checkout.reserve_date:
-            return 'reserved (other)'
+            return 'reserved'
         raise ValueError("BookCopy current_checkout in bad state!")
 
     def do_borrow(self, user, now):
@@ -174,4 +177,18 @@ class BookCopyCheckout(models.Model):
                 return True
         # No date information at all.
         return False
+
+    def get_fine(self, now):
+        """
+        If a fine is applicable, compute it as a floating point number.
+        The fine is 20 cents per day, if there is no fine, the value
+        None is returned.
+        @return Float | None
+        """
+        if self.borrow_date:
+            return_by_date = self.borrow_date + timedelta(days=20)
+            if now > return_by_date:
+                return (20 * (now - return_by_date).days) / 100.0
+        return None
+
 

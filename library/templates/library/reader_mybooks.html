@@ -1,0 +1,69 @@
+{% extends "library/base.html" %}
+
+{% block title %}
+My Books
+{% endblock %}
+
+{% block content %}
+
+<ul class="breadcrumb">
+  <li><a href="{% url 'dashboard' %}">Dashboard</a> <span class="divider">/</span></li>
+  <li class="active">My Books</li>
+</ul>
+
+<h2>My Books</h2>
+
+
+<table class="table">
+<tr>
+<th>ID</th>
+<th>Library Branch</th>
+<th>Copy #</th>
+<th>Title</th>
+<th>Reserve Date</th>
+<th>Borrow Date</th>
+<th>Return-By Date</th>
+<th>Status</th>
+<th>Fine</th>
+</tr>
+{% for bookcopy in bookcopy_list %}
+<!-- Button to trigger modal -->
+<tr>
+<td><a href="{% url 'reader_checkout' %}?id={{bookcopy.id}}" role="button" data-toggle="modal">{{bookcopy.id}}</a></td>
+<td>{{bookcopy.library_branch_name}}</td>
+<td>{{bookcopy.copy_number}}</td>
+<td>{{bookcopy.title}}</td>
+<td>{{bookcopy.reserve_date}}</td>
+<td>{{bookcopy.borrow_date}}</td>
+<td>{{bookcopy.return_by_date}}</td>
+<td>{{bookcopy.status}}</td>
+<td>{{bookcopy.fine}}</td>
+</tr>
+{% endfor %}
+</table>
+
+<div class="pagination">
+  <ul>
+    {% load library_extras %}
+    {% if page == 1 %}
+    <li class="disabled"><span>&laquo;</span></li>
+    {% else %}
+    <li><a href="{{ request.path }}{% query_string 'page=page_prev' '' %}">&laquo;</a></li>
+    {% endif %}
+
+    {% for i in pages %}
+    <li {% if i == page %} class="active" {% endif %}>
+      <a href="{{ request.path }}{% query_string 'page=i' '' %}">{{i}}</a>
+    </li>
+    {% endfor %}
+
+    {% if page == page_count %}
+    <li class="disabled" ><span>&raquo;</span></li>
+    {% else %}
+    <li><a href="{{ request.path }}{% query_string 'page=page_next' '' %}">&raquo;</a></li>
+    {% endif %}
+  </ul>
+</div>
+
+{% endblock %}
+

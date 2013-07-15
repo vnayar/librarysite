@@ -21,6 +21,7 @@ urlpatterns = patterns('',
     url(r'^dashboard$', 'library.views.dashboard_view', name='dashboard'),
     url(r'^reader_bookcopy$', 'library.views.reader_bookcopy', name='reader_bookcopy'),
     url(r'^reader_checkout$', 'library.views.reader_checkout', name='reader_checkout'),
+    url(r'^reader_mybooks$', 'library.views.reader_mybooks', name='reader_mybooks'),
 
     # Examples:
     # url(r'^$', 'librarysite.views.home', name='home'),
