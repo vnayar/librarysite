@@ -9,6 +9,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
+from django.db.models import Avg, Max, Min, Count
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import render
 
@@ -196,6 +197,74 @@ def admin_bookcopy_add(request):
     return render(request, 'library/admin_bookcopy_add.html', {
         'form': form,
     })
+
+class LibraryBranchStatisticsForm(forms.Form):
+    """
+    Form for requesting statistics about a LibraryBranch.
+    """
+    library_branch = forms.ChoiceField(label="Library Branch",
+                                       choices=(),
+                                       widget=forms.Select())
+    
+    STATISTIC_CHOICES = (
+        ('borrow', 'Top Borrowers',),
+        ('books', 'Top Books',))
+    statistic = forms.ChoiceField(label="Statistic",
+                                  choices=STATISTIC_CHOICES,
+                                  widget=forms.Select())
+
+    def __init__(self, *args, **kwargs):
+        super(LibraryBranchStatisticsForm, self).__init__(*args, **kwargs)
+        library_branch_choices = [(lb.id, lb.name) for lb in LibraryBranch.objects.all()]
+        self.fields['library_branch'].choices = library_branch_choices
+
+@login_required
+@staff_member_required
+def admin_librarybranch_statistics(request):
+    if request.method == 'POST':
+        # Handle form submission.
+        form = LibraryBranchStatisticsForm(request.POST) # Initialize form with data.
+        if form.is_valid():
+            library_branch = LibraryBranch.objects.get(
+                id=form.cleaned_data['library_branch'])
+            statistic = form.cleaned_data['statistic']
+
+            # Data for displaying a table.
+            headers = []
+            data = [[3, 4], [5, 6]]
+            
+            # Based upon the requested statistic, do the computations.
+            if statistic == 'borrow':
+                title = "Top Borrowers"
+                headers = ['Username', 'Total Books Borrowed']
+                data = BookCopyCheckout.objects \
+                    .filter(bookcopy__library_branch=library_branch) \
+                    .values_list('user__username') \
+                    .annotate(num_books=Count('id')) \
+                    .order_by('-num_books')
+            elif statistic == 'books':
+                title = "Top Borrowed Books"
+                headers = ['Book Title', 'Times Borrowed']
+                data = BookCopyCheckout.objects \
+                    .filter(bookcopy__library_branch=library_branch) \
+                    .values_list('bookcopy__book__title') \
+                    .annotate(borrow_count=Count('id')) \
+                    .order_by('-borrow_count')
+
+            return render(request, 'library/admin_librarybranch_statistics.html', {
+                    'form': form,
+                    'library_branch' : library_branch,
+                    'title' : title,
+                    'headers' : headers,
+                    'data' : data
+                    })
+        else:
+            return HttpResponse("Invalid form!")
+    else:
+        form = LibraryBranchStatisticsForm() # An unbound form
+        return render(request, 'library/admin_librarybranch_statistics.html', {
+                'form': form,
+                })
 
 @login_required
 def dashboard_view(request):

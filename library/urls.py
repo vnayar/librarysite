@@ -16,6 +16,8 @@ urlpatterns = patterns('',
     url(r'^admin/reader/add$', 'library.views.admin_reader_add', name='admin_reader_add'),
     url(r'^admin/bookcopy$', 'library.views.admin_bookcopy', name='admin_bookcopy'),
     url(r'^admin/bookcopy/add$', 'library.views.admin_bookcopy_add', name='admin_bookcopy_add'),
+    url(r'^admin/librarybranch_statistics$', 'library.views.admin_librarybranch_statistics',
+        name='admin_librarybranch_statistics'),
 
     # Reader views.
     url(r'^dashboard$', 'library.views.dashboard_view', name='dashboard'),

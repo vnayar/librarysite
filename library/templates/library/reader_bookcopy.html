@@ -16,20 +16,18 @@ Search Book Copy List
 
 <div class="navbar">
   <div class="navbar-inner">
-    <ul class="nav">
-      <form class="navbar-search pull-left" action="{% url 'reader_bookcopy'  %}"
-            method="get">
-        <input type="text" class="search-query" name="q" placeholder="Search">
-        <select name="by">
-          <option value="all" selected="true">All</option>
-          <option value="mine">Mine</option>
-          <option value="title">Title</option>
-          <option value="isbn">ISBN</option>
-          <option value="publisher">Publisher name</option>
-        </select>
-        <button id="search-button" type="submit" class="btn">Submit</button>
-      </form>
-    </ul>
+    <form class="navbar-search pull-left" action="{% url 'reader_bookcopy'  %}"
+          method="get">
+      <input type="text" class="search-query" name="q" placeholder="Search">
+      <select name="by">
+        <option value="all" selected="true">All</option>
+        <option value="mine">Mine</option>
+        <option value="title">Title</option>
+        <option value="isbn">ISBN</option>
+        <option value="publisher">Publisher name</option>
+      </select>
+      <button id="search-button" type="submit" class="btn">Submit</button>
+    </form>
   </div>
 </div>
 

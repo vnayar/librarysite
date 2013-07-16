@@ -1,0 +1,57 @@
+{% extends "library/base.html" %}
+
+{% block title %}
+Search Book Copy List
+{% endblock %}
+
+{% block content %}
+
+<ul class="breadcrumb">
+  <li><a href="{% url 'admin' %}">Admin</a> <span class="divider">/</span></li>
+  <li class="active">Library Branch Statistics</li>
+</ul>
+
+<h2>Library Branch Statistics</h2>
+
+<div class="navbar">
+  <div class="navbar-inner">
+    <form class="navbar-form pull-left form-inline"
+          action="{% url 'admin_librarybranch_statistics' %}" method="post">
+      {% csrf_token %}
+      {% for field in form %}
+      <label>
+        {{ field.errors }}
+        {{ field.label_tag }} {{ field }}
+      </label>
+      {% endfor %}
+      <input type="submit" value="Go" />
+    </form>
+  </div>
+</div>
+
+{% if title %}
+<h3>{{ title }}</h3>
+<h4>{{ library_branch.name }}</h4>
+{% endif %}
+
+{% if headers %}
+<table class="table">
+<tr>
+{% for header in headers %}
+<th>{{ header }}</th>
+{% endfor %}
+</tr>
+
+{% for data_row in data %}
+<tr>
+{% for data_col in data_row %}
+<td>{{ data_col }}</td>
+{% endfor %}
+</tr>
+{% endfor %}
+
+</table>
+{% endif %}
+
+{% endblock %}
+
