@@ -10,6 +10,7 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.db.models import Avg, Max, Min, Count
+from django.db import connection
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import render
 
@@ -208,7 +209,8 @@ class LibraryBranchStatisticsForm(forms.Form):
     
     STATISTIC_CHOICES = (
         ('borrow', 'Top Borrowers',),
-        ('books', 'Top Books',))
+        ('books', 'Top Books',),
+        ('avg_fine', 'Average Fine',))
     statistic = forms.ChoiceField(label="Statistic",
                                   choices=STATISTIC_CHOICES,
                                   widget=forms.Select())
@@ -250,6 +252,28 @@ def admin_librarybranch_statistics(request):
                     .values_list('bookcopy__book__title') \
                     .annotate(borrow_count=Count('id')) \
                     .order_by('-borrow_count')
+            elif statistic == 'avg_fine':
+                title = "Average Fine"
+                headers = ['Average Fine']
+                # Get a raw SQL connection to compute the average.
+                # There's no easy Django equivalent for this.
+                cursor = connection.cursor()
+                cursor.execute(
+                    '\n'.join([
+                            'SELECT avg(late_days)',
+                            'FROM (',
+                            '  SELECT DateDiff(COALESCE(return_date, now()), borrow_date)',
+                            '    - %s AS late_days',
+                            '  FROM library_bookcopycheckout as bcc, library_bookcopy as bc',
+                            '  WHERE bcc.bookcopy_id = bc.id',
+                            '    AND bc.library_branch_id = %s',
+                            '    AND not isnull(borrow_date)',
+                            '  ) AS t1',
+                            'WHERE late_days > 0']),
+                    [20, library_branch.id]) # Fines are computed when late more than 20 days.
+                avg_late_days = float(cursor.fetchone()[0])
+                data = [['$%.2f' % (avg_late_days * 0.20)]] # 20 cents per day.
+                print "data = ", data
 
             return render(request, 'library/admin_librarybranch_statistics.html', {
                     'form': form,
