@@ -243,7 +243,8 @@ def admin_librarybranch_statistics(request):
                     .filter(bookcopy__library_branch=library_branch) \
                     .values_list('user__username') \
                     .annotate(num_books=Count('id')) \
-                    .order_by('-num_books')
+                    .order_by('-num_books') \  # ORDER BY num_books DESC
+                    [:10]  # LIMIT 10
             elif statistic == 'books':
                 title = "Top Borrowed Books"
                 headers = ['Book Title', 'Times Borrowed']
@@ -251,7 +252,8 @@ def admin_librarybranch_statistics(request):
                     .filter(bookcopy__library_branch=library_branch) \
                     .values_list('bookcopy__book__title') \
                     .annotate(borrow_count=Count('id')) \
-                    .order_by('-borrow_count')
+                    .order_by('-borrow_count') \  # ORDER BY borrow_count DESC
+                    [:10]  # LIMIT 10
             elif statistic == 'avg_fine':
                 title = "Average Fine"
                 headers = ['Average Fine']
