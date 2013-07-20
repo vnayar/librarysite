@@ -1,5 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import User
+from django.db import IntegrityError
+
 from library.models import (Author, Publisher, Book, LibraryBranch,
                             Reader, BookCopy)
 
@@ -71,7 +73,11 @@ class Command(BaseCommand):
                                      ["Drive", "Avenue", "Parkway", "Place", "Lane"])
             # Save the publisher in the DB.
             publisher = Publisher(name=name, address=address)
-            publisher.save()
+            try:
+                publisher.save()
+            except IntegrityError:
+                # Try again.
+                i -= 1
 
     def init_book(self):
         # Define a boundary on random dates.
