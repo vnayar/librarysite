@@ -15,7 +15,7 @@ class Publisher(models.Model):
     """
     Data about a publishing business that prints book copies.
     """
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200, unique=True)
     address = models.TextField()
 
 class Book(models.Model):
@@ -23,7 +23,7 @@ class Book(models.Model):
     Summary information about a book.
     """
     title = models.CharField(max_length=200)
-    isbn = models.CharField(max_length=13)
+    isbn = models.CharField(max_length=13, unique=True)
     publisher = models.ForeignKey(Publisher)
     publication_date = models.DateField()
     authors = models.ManyToManyField(Author)
@@ -32,14 +32,14 @@ class LibraryBranch(models.Model):
     """
     A building that holds and keeps track of books.
     """
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200, unique=True)
     address = models.TextField()
 
 class Reader(models.Model):
     """
     A person who may check books out from the library.
     """
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, unique=True)
     address = models.TextField()
     phone_number = models.CharField(max_length=20)
 

@@ -1,0 +1,7 @@
+.dia:
+  These files are read by the open-source program Dia.
+  https://wiki.gnome.org/Dia/
+
+.mwb
+  These files are read by MySQL-Workbench.
+  http://dev.mysql.com/downloads/tools/workbench/
