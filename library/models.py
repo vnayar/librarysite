@@ -170,7 +170,7 @@ class BookCopyCheckout(models.Model):
                 year=self.reserve_date.year, month=self.reserve_date.month,
                 day=self.reserve_date.day, hour=18)
             if self.reserve_date.hour >= reserve_expire_date.hour:
-                reserve_expire_date.day += 1
+                reserve_expire_date = reserve_expire_date + timedelta(days=1)
             if now > reserve_expire_date:
                 return False
             else:

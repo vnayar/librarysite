@@ -273,7 +273,7 @@ def admin_librarybranch_statistics(request):
                             '  ) AS t1',
                             'WHERE late_days > 0']),
                     [20, library_branch.id]) # Fines are computed when late more than 20 days.
-                avg_late_days = float(cursor.fetchone()[0])
+                avg_late_days = float(cursor.fetchone()[0] or 0.0)
                 data = [['$%.2f' % (avg_late_days * 0.20)]] # 20 cents per day.
                 print "data = ", data
 
